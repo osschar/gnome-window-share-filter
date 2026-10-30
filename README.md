@@ -15,7 +15,7 @@ first, in a small prompt:
 
 The picker then offers only the matching windows. Esc, or "All windows", skips
 the filter. Without an answer, the prompt applies what has been chosen after 60
-seconds.
+seconds. Typing or clicking a toggle stops that countdown.
 
 Sharing a whole screen is not affected.
 

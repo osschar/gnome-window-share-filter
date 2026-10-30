@@ -4,5 +4,5 @@
   "description": "Asks for a filter when an app opens the screen-share window picker, and offers the picker only the matching windows: by application, by title words, optionally only those on the current workspace.",
   "url": "https://github.com/osschar/gnome-window-share-filter",
   "shell-version": ["50"],
-  "version": 1
+  "version": 2
 }

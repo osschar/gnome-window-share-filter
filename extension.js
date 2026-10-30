@@ -25,7 +25,9 @@
 //     refresh behind a share; the list is not shown to anyone, so answer with
 //     every window;
 //   - otherwise: a new share; answer with every window and prompt.
-// The prompt applies what has been chosen after PROMPT_SECONDS.
+// Left alone, the prompt applies what has been chosen after PROMPT_SECONDS, so
+// one that opens unattended does not stay over the desktop. Typing or clicking
+// a toggle stops the countdown.
 //
 // When an app restores an earlier window share, the portal fetches the list
 // without showing its picker. The restore goes ahead with the full list, and
@@ -132,6 +134,7 @@ const FilterDialog = class {
                     this._apps.add(name);
                 else
                     this._apps.delete(name);
+                this._stopCountdown();
                 this._update();
                 this._entry.grab_key_focus();
             });
@@ -141,7 +144,10 @@ const FilterDialog = class {
 
         box.add_child(new St.Label({text: 'Title contains:'}));
         this._entry = new St.Entry({hint_text: 'e.g. slides, mkfit', can_focus: true});
-        this._entry.clutter_text.connect('text-changed', () => this._update());
+        this._entry.clutter_text.connect('text-changed', () => {
+            this._stopCountdown();
+            this._update();
+        });
         this._entry.clutter_text.connect('activate', () => this._finish(this._filter()));
         box.add_child(this._entry);
 
@@ -149,6 +155,7 @@ const FilterDialog = class {
         markChecked(this._wsButton);
         this._wsButton.connect('clicked', () => {
             this._workspaceOnly = this._wsButton.checked;
+            this._stopCountdown();
             this._update();
             this._entry.grab_key_focus();
         });
@@ -193,16 +200,21 @@ const FilterDialog = class {
         this._wsButton.label = `Current workspace only: ${this._workspaceOnly ? 'on' : 'off'}`;
         const f = this._filter();
         const n = this._windows.filter(w => matches(f, w)).length;
-        this._count.text = `${n} of ${this._windows.length} windows match (applies itself in ${this._left} s)`;
+        const countdown = this._timeout ? ` (applies itself in ${this._left} s)` : '';
+        this._count.text = `${n} of ${this._windows.length} windows match${countdown}`;
+    }
+
+    _stopCountdown() {
+        if (this._timeout)
+            GLib.source_remove(this._timeout);
+        this._timeout = 0;
     }
 
     _finish(filter) {
         if (this._finished)
             return;
         this._finished = true;
-        if (this._timeout)
-            GLib.source_remove(this._timeout);
-        this._timeout = 0;
+        this._stopCountdown();
         this._onDone(filter);
         if (!this._destroyed)
             this._dialog.close();
